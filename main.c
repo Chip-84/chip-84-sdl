@@ -15,19 +15,26 @@
 
 void render_screen(SDL_Renderer *renderer) {
 	int i = 0;
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	int j = 0;
+	uint8_t colors[4] = {0, 85, 170, 255};
 	int ss = (SCREEN_SCALE / (extendedScreen+1));
-	for(i = 0; i < pixel_number; i++) {
-		if(canvas_data[i]) {
-			int x = (i % screen_width) * ss;
-			int y = floor(i / screen_width) * ss;
-			int wh = ss;
-			SDL_Rect rect;
-			rect.x = x;
-			rect.y = y;
-			rect.w = wh;
-			rect.h = wh;
-			SDL_RenderFillRect(renderer, &rect);
+	for(j = 0; j < 1; j++) {
+		if(j == 0) SDL_SetRenderDrawColor(renderer, colors[3], colors[3], colors[3], 255);
+		if(j == 1) SDL_SetRenderDrawColor(renderer, colors[1], colors[1], colors[1], 255);
+		for(i = 0; i < pixel_number; i++) {
+			if(canvas_data[j][i]) {
+				if(j == 1 && canvas_data[j-1][i])
+					SDL_SetRenderDrawColor(renderer, colors[2], colors[2], colors[2], 255);
+				int x = (i % screen_width) * ss;
+				int y = floor(i / screen_width) * ss;
+				int wh = ss;
+				SDL_Rect rect;
+				rect.x = x;
+				rect.y = y;
+				rect.w = wh;
+				rect.h = wh;
+				SDL_RenderFillRect(renderer, &rect);
+			}
 		}
 	}
 }
@@ -48,7 +55,9 @@ int main(int argc, char* argv[]) {
 		printf("Error creating renderer: %s\n", SDL_GetError());
 	}
 	
-	loadProgram("rom/schip8/TRAFFIC");
+	//loadProgram("rom/xochip/XOTEST");
+	loadProgram("rom/INVADERS");
+	//loadProgram("rom/schip8/TRAFFIC");
 	
 	SDL_Event e;
 	int quit = 0;

@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern uint8_t canvas_data[8192];
+extern uint8_t canvas_data[3][8192];
 
 extern uint16_t opcode;
-extern uint8_t memory[0x1000];
+extern uint8_t memory[0x10000];
 extern uint8_t SV[8];
 extern uint8_t V[16];
 extern uint16_t I;
@@ -25,6 +25,9 @@ extern bool drawFlag;
 extern bool paused;
 extern bool playing;
 extern bool extendedScreen;
+
+extern bool xochip;
+extern uint8_t pattern[16];
 extern uint8_t plane;
 
 extern uint8_t screen_width;
