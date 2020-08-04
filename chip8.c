@@ -33,7 +33,6 @@ uint8_t plane = 1;
 
 uint8_t game_data[3584];
 uint8_t canvas_data[3][8192];
-uint8_t keypad[16];
 uint8_t controlMap[16];
 
 unsigned char fontset[80] = {
@@ -75,7 +74,6 @@ uint16_t  fontset_ten[80] = {
 
 uint8_t step;
 uint16_t pixel;
-uint16_t index;
 
 uint8_t _y;
 uint8_t _x;
@@ -169,7 +167,7 @@ void emulateCycle(uint8_t steps) {
 						
 						for(j = 0; j < 2; j++) {
 							if(plane & (j + 1) == 0) continue;
-							*disp = &canvas_data[j][0];
+							disp = &canvas_data[j][0];
 							for(i = screen_height-2; i >= 0; i--) {
 								memcpy(disp + (i+n)*screen_width, disp + i*screen_width, screen_width);
 								memset(disp + i*screen_width, 0, screen_width);
@@ -187,7 +185,7 @@ void emulateCycle(uint8_t steps) {
 						
 						for(j = 0; j < 2; j++) {
 							if(plane & (j + 1) == 0) continue;
-							*disp = &canvas_data[j][0];
+							disp = &canvas_data[j][0];
 							for(i = 0; i < screen_height-2; i--) {
 								memcpy(disp + i*screen_width, disp + (i+n)*screen_width, screen_width);
 								memset(disp + (i+n)*screen_width, 0, screen_width);
@@ -214,7 +212,7 @@ void emulateCycle(uint8_t steps) {
 						
 						for(j = 0; j < 2; j++) {
 							if(plane & (j + 1) == 0) continue;
-							*disp = &canvas_data[j][0];
+							disp = &canvas_data[j][0];
 							for(i = 0; i < screen_height; i++) {
 								memmove(disp + 4, disp, screen_width - 4);
 								memset(disp, 0, 4);
@@ -229,7 +227,7 @@ void emulateCycle(uint8_t steps) {
 						
 						for(j = 0; j < 2; j++) {
 							if(plane & (j + 1) == 0) continue;
-							*disp = &canvas_data[j][0];
+							disp = &canvas_data[j][0];
 							for(i = 0; i < screen_height; i++) {
 								memmove(disp, disp + 4, screen_width - 4);
 								memset(disp + screen_width - 4, 0, 4);
@@ -392,6 +390,7 @@ void emulateCycle(uint8_t steps) {
 				uint8_t yd = V[y];
 				uint8_t height = (opcode & 0x000f);
 				uint8_t layer;
+				uint16_t index;
 				
 				V[0xf] = 0;
 				

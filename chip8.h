@@ -35,11 +35,10 @@ extern uint8_t screen_height;
 extern uint16_t pixel_number;
 
 extern uint8_t game_data[3584];
-extern uint8_t keypad[16];
 extern uint8_t controlMap[16];
 
 void loadFontset(void);
 void initialize(void);
-//void loadProgram(char *fileName);
+void loadProgram(char *fileName);
 void emulateCycle(uint8_t steps);
 //void setKeys(void);
