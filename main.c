@@ -16,13 +16,13 @@
 #include "include/nfd.h"
 #include "chip8.h"
 
-#define SCREEN_SCALE 8
 #define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 450
-#define SCREEN_OFFSETX WINDOW_WIDTH * 0.5 - SCREEN_SCALE * 64 * 0.5
+#define SCREEN_OFFSETX (WINDOW_WIDTH * 0.5 - SCREEN_SCALE * 64 * 0.5)
 #define SCREEN_OFFSETY 20
 
 char romDirectory[256] = ".";
+int SCREEN_SCALE = 8;
 
 typedef struct {
 	uint32_t x;
@@ -46,15 +46,15 @@ void draw_rectangle(SDL_Renderer* renderer, int x, int y, int width, int height)
 	SDL_RenderFillRect(renderer, &rect);
 }
 
-void render_screen(SDL_Renderer* renderer) {
+void render_screen(SDL_Renderer* renderer, bool padding) {
 	int i = 0;
 	int j = 0;
 	uint8_t colors[4] = {0, 85, 170, 255};
 	int ss = (SCREEN_SCALE / (extendedScreen+1));
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_Rect screen_rect;
-	screen_rect.x = SCREEN_OFFSETX;
-	screen_rect.y = SCREEN_OFFSETY;
+	screen_rect.x = SCREEN_OFFSETX * padding;
+	screen_rect.y = SCREEN_OFFSETY * padding;
 	screen_rect.w = SCREEN_SCALE * 64;
 	screen_rect.h = SCREEN_SCALE * 32;
 	SDL_RenderFillRect(renderer, &screen_rect);
@@ -67,12 +67,11 @@ void render_screen(SDL_Renderer* renderer) {
 					SDL_SetRenderDrawColor(renderer, colors[2], colors[2], colors[2], 255);
 				int x = (i % screen_width) * ss;
 				int y = floor(i / screen_width) * ss;
-				int wh = ss;
 				SDL_Rect rect;
-				rect.x = x + SCREEN_OFFSETX;
-				rect.y = y + SCREEN_OFFSETY;
-				rect.w = wh;
-				rect.h = wh;
+				rect.x = x + SCREEN_OFFSETX * padding;
+				rect.y = y + SCREEN_OFFSETY * padding;
+				rect.w = ss;
+				rect.h = ss;
 				SDL_RenderFillRect(renderer, &rect);
 			}
 		}
@@ -188,10 +187,43 @@ char* sanitizeCpf(char* input) {
 }
 
 int main(int argc, char* argv[]) {
+	int cpf = 100;
+	bool nogui = false;
+	char openFile[256] = "null";
+	for(int i = 1; i < argc; i++) {
+		if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+			printf("\nUsage:\n\n\t-h, --help\t\tDisplay available command line arguments.\n");
+			printf("\t-n, --nogui\t\tStart Chip-84 without UI elements, leaving only the display shown.\n");
+			printf("\t-o, --open [path]\tDirectly load a ROM upon launch.\n");
+			printf("\t-c, --cpf [number]\tStart Chip-84 with an initial cycles per frame value.\n");
+			printf("\t-s, --screenscale [number]\tSet the scale of the display.\n");
+			return 1;
+		}
+		if(strcmp(argv[i], "--nogui") == 0 || strcmp(argv[i], "-n") == 0) {
+			nogui = true;
+		}
+		if(strcmp(argv[i], "--open") == 0 || strcmp(argv[i], "-o") == 0) {
+			if(i+1<argc)
+				strcpy(openFile, argv[i+1]);
+		}
+		if(strcmp(argv[i], "--cpf") == 0 || strcmp(argv[i], "-c") == 0) {
+			if(i+1<argc)
+				cpf = atoi(sanitizeCpf(argv[i+1]));
+		}
+		if(strcmp(argv[i], "--screenscale") == 0 || strcmp(argv[i], "-s") == 0) {
+			if(i+1<argc)
+				SCREEN_SCALE = atoi(sanitizeCpf(argv[i+1]));
+		}
+	}
+
 	SDL_Window* window;
 	SDL_Init(SDL_INIT_EVERYTHING);
 	
-	window = SDL_CreateWindow("Chip-84 SDL Edition", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+	if(nogui)
+		window = SDL_CreateWindow("Chip-84 SDL Edition --nogui", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_SCALE*64, SCREEN_SCALE*32, SDL_WINDOW_SHOWN);
+	else
+		window = SDL_CreateWindow("Chip-84 SDL Edition", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+	
 	if(window == NULL) {
 		printf("Error creating window: %s\n", SDL_GetError());
 		return 1;
@@ -228,11 +260,14 @@ int main(int argc, char* argv[]) {
 		.color = { .r=200, .g=200, .b=200, .a=255 },
 		.font = font,
 	};
+
+	if(strcmp(openFile, "null") != 0) {
+		loadProgram(openFile);
+	}
 	
 	SDL_Event e;
 	int quit = 0;
 	bool ctrl = false;
-	int cpf = 100;
 	char* textInput;
 
 	textInput = (char*)malloc(1*sizeof(char));
@@ -382,48 +417,49 @@ int main(int argc, char* argv[]) {
 					break;
 			}
 
-			button_mouse_event(&openButton, &e);
-			button_mouse_event(&cpfButton, &e);
+			if(!nogui) {
+				button_mouse_event(&openButton, &e);
+				button_mouse_event(&cpfButton, &e);
+			}
 		}
 		
 		emulateCycle(cpf);
 		
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-		render_toolbar(renderer);
-		render_screen(renderer);
+		if(!nogui)
+			render_toolbar(renderer);
+		render_screen(renderer, !nogui);
 
-		SDL_Color black = { 0, 0, 0 };
-
-		//printText(renderer, font, textInput, 50, SCREEN_SCALE * 32 + SCREEN_OFFSETY + 250, black);
-		//printText(renderer, font, "Right Arrow - Increase CPF", 50, SCREEN_SCALE * 32 + SCREEN_OFFSETY + 276, black);
-		//printText(renderer, font, "Left Arrow - Decrease CPF", 50, SCREEN_SCALE * 32 + SCREEN_OFFSETY + 302, black);
-		
-		
-		if(button(renderer, &openButton)) {
-			chooseGame();
-		}
-		if(button(renderer, &cpfButton)) {
-			if(cpfButton.text == "          Done          ") {
-				SDL_StopTextInput();
-				cpfButton.text = "Edit Cycles Per Frame...";
-				cpf = atoi(textInput);
-			} else {
-				char cpfString[64];
-				sprintf(cpfString, "%d", cpf);
-				strcpy(textInput, cpfString);
-				SDL_StartTextInput();
-				cpfButton.text = "          Done          ";
+		if(!nogui) {
+			SDL_Color black = { 0, 0, 0 };
+			
+			
+			if(button(renderer, &openButton)) {
+				chooseGame();
 			}
-		}
+			if(button(renderer, &cpfButton)) {
+				if(cpfButton.text == "          Done          ") {
+					SDL_StopTextInput();
+					cpfButton.text = "Edit Cycles Per Frame...";
+					cpf = atoi(textInput);
+				} else {
+					char cpfString[64];
+					sprintf(cpfString, "%d", cpf);
+					strcpy(textInput, cpfString);
+					SDL_StartTextInput();
+					cpfButton.text = "          Done          ";
+				}
+			}
 
-		char cpfString[64];
-		if(cpfButton.text == "          Done          ") {
-			sprintf(cpfString, "%s_", textInput);
-		} else {
-			sprintf(cpfString, "%d", cpf);
+			char cpfString[64];
+			if(cpfButton.text == "          Done          ") {
+				sprintf(cpfString, "%s_", textInput);
+			} else {
+				sprintf(cpfString, "%d", cpf);
+			}
+			printText(renderer, font, cpfString, 325, SCREEN_SCALE * 32 + SCREEN_OFFSETY + 110, black);
 		}
-		printText(renderer, font, cpfString, 325, SCREEN_SCALE * 32 + SCREEN_OFFSETY + 110, black);
 
 		SDL_RenderPresent(renderer);
 	}
