@@ -20,5 +20,12 @@ make
 
 Ctrl+O - Open a ROM
 
+### Command-Line Arguments
+`-h, --help` - Display available command line arguments.\
+`-n, --nogui` - Start Chip-84 without UI elements, leaving only the display shown.\
+`-o, --open [path]` - Directly load a ROM upon launch.\
+`-c, --cpf [number]` - Start Chip-84 with an initial cycles per frame value.\
+`-s, --screenscale [number]` - Set the scale of the display.
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
