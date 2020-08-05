@@ -1,4 +1,5 @@
 /Chip-84
+*.exe
 /obj/*
 /rom/*
 /.vscode/*

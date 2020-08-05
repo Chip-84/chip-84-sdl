@@ -2,12 +2,18 @@ IDIR = include
 CC = gcc
 CFLAGS = -I.
 
-BINARY=Chip-84
+BINARY = Chip-84
 
 ODIR = obj
 LDIR = lib
 
-LDLIBS = -lSDL2 -lSDL2_ttf $(LDIR)/libnfd.a $(shell pkg-config --cflags --libs gtk+-3.0)
+NFDLIB = libnfd.a
+PLATLIBS = 
+ifeq ($(OS), Windows_NT)
+	NFDLIB = nfd.lib
+	PLATLIBS = -lmingw32 -lSDL2main
+endif
+LDLIBS = $(PLATLIBS) -lSDL2 -lSDL2_ttf $(LDIR)/$(NFDLIB) $(shell pkg-config --cflags --libs gtk+-3.0)
 
 _DEPS = chip8.h
 DEPS = $(patsubst %, $(IDIR)/%, $(_DEPS))

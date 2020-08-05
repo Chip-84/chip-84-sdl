@@ -4,13 +4,27 @@ Chip-84 is a CHIP-8 and SCHIP-8 interpreter originally written for the TI-84 Plu
 
 ## Building
 
-Clone the repository and install these dependencies: `libsdl2-dev`, `libsdl2-ttf-dev`:
+### Linux
+Clone the repository and install its dependencies:
 
 ```bash
-sudo apt-get install libsdl2-dev
-sudo apt-get install libsdl2-ttf-dev
+sudo apt-get install libgtk-3-dev libsdl2-dev libsdl2-ttf-dev
 ```
 Then run `make`:
+
+```bash
+make
+```
+
+### Windows
+[Install and setup MSYS2](https://github.com/orlp/dev-on-windows/wiki/Installing-GCC--&-MSYS2) if you haven't already.
+Clone the repository and install its dependencies using MSYS2:
+
+```bash
+pacman -S mingw-w64-x86_64-gtk3 mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_ttf
+```
+
+Then run `make` using MinGW:
 
 ```bash
 make

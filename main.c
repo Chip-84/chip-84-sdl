@@ -21,7 +21,7 @@
 #define SCREEN_OFFSETX (WINDOW_WIDTH * 0.5 - SCREEN_SCALE * 64 * 0.5)
 #define SCREEN_OFFSETY 20
 
-char romDirectory[256] = ".";
+char romDirectory[256] = "";
 int SCREEN_SCALE = 8;
 
 typedef struct {
@@ -86,11 +86,11 @@ void render_toolbar(SDL_Renderer* renderer) {
 bool chooseGame() {
 	nfdchar_t* outpath = NULL;
 	nfdresult_t result = NFD_OpenDialog(NULL, romDirectory, &outpath);
-	char pathcpy[256];
-	strcpy(pathcpy, outpath);
-	strcpy(romDirectory, dirname(pathcpy));
 	
 	if(result == NFD_OKAY) {
+		char pathcpy[256];
+		strcpy(pathcpy, outpath);
+		strcpy(romDirectory, dirname(pathcpy));
 		loadProgram(outpath);
 		return true;
 	} else if(result = NFD_CANCEL) {
