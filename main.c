@@ -13,7 +13,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "include/nfd.h"
+#include "tinyfiledialogs.h"
+//#include "include/nfd.h"
 #include "chip8.h"
 
 #define WINDOW_WIDTH 600
@@ -84,10 +85,12 @@ void render_toolbar(SDL_Renderer* renderer) {
 }
 
 bool chooseGame() {
-	nfdchar_t* outpath = NULL;
-	nfdresult_t result = NFD_OpenDialog(NULL, romDirectory, &outpath);
+	//nfdchar_t* outpath = NULL;
+	//nfdresult_t result = NFD_OpenDialog(NULL, romDirectory, &outpath);
+	char* outpath = NULL;
+	outpath = tinyfd_openFileDialog("Open a ROM", romDirectory, 0, NULL, NULL, 0);
 	
-	if(result == NFD_OKAY) {
+	/*if(result == NFD_OKAY) {
 		char pathcpy[256];
 		strcpy(pathcpy, outpath);
 		strcpy(romDirectory, dirname(pathcpy));
@@ -97,6 +100,15 @@ bool chooseGame() {
 		return false;
 	} else {
 		printf("Error: %s\n", NFD_GetError());
+		return false;
+	}*/
+	if(outpath != NULL) {
+		char pathcpy[256];
+		strcpy(pathcpy, outpath);
+		strcpy(romDirectory, dirname(pathcpy));
+		loadProgram(outpath);
+		return true;
+	} else {
 		return false;
 	}
 }

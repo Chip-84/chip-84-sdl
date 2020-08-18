@@ -1,26 +1,20 @@
-IDIR = include
 CC = gcc
 CFLAGS = -I.
 
 BINARY = Chip-84
 
 ODIR = obj
-LDIR = lib
-
-NFDLIB = libnfd.a
 PLATLIBS = 
 ifeq ($(OS), Windows_NT)
-	NFDLIB = nfd.lib
-	PLATLIBS = -lmingw32 -lSDL2main
+	PLATLIBS = -lmingw32 -lSDL2main -lcomdlg32 -lole32
 endif
-LDLIBS = $(PLATLIBS) -lSDL2 -lSDL2_ttf $(LDIR)/$(NFDLIB) $(shell pkg-config --cflags --libs gtk+-3.0)
+LDLIBS = $(PLATLIBS) -lSDL2 -lSDL2_ttf
 
-_DEPS = chip8.h
-DEPS = $(patsubst %, $(IDIR)/%, $(_DEPS))
-_OBJ = main.o chip8.o
+DEPS = chip8.h
+_OBJ = main.o chip8.o tinyfiledialogs.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
-$(ODIR)/%.o: %.c $(_DEPS)
+$(ODIR)/%.o: %.c $(DEPS)
 	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
