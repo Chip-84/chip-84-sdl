@@ -435,7 +435,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		
-		emulateCycle(cpf);
+		//emulateCycle(cpf);
 		
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
