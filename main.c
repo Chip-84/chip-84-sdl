@@ -17,6 +17,8 @@
 //#include "include/nfd.h"
 #include "chip8.h"
 
+#define TEX_W 128
+#define TEX_H 64
 #define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 450
 #define SCREEN_OFFSETX (WINDOW_WIDTH * 0.5 - SCREEN_SCALE * 64 * 0.5)
@@ -47,36 +49,41 @@ void draw_rectangle(SDL_Renderer* renderer, int x, int y, int width, int height)
 	SDL_RenderFillRect(renderer, &rect);
 }
 
-void render_screen(SDL_Renderer* renderer, bool padding) {
+void render_screen(SDL_Renderer* renderer, bool padding, SDL_Texture* texture, unsigned char* pixels) {
 	int i = 0;
 	int j = 0;
 	uint8_t colors[4] = {0, 85, 170, 255};
-	int ss = (SCREEN_SCALE / (extendedScreen+1));
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_Rect screen_rect;
 	screen_rect.x = SCREEN_OFFSETX * padding;
 	screen_rect.y = SCREEN_OFFSETY * padding;
 	screen_rect.w = SCREEN_SCALE * 64;
 	screen_rect.h = SCREEN_SCALE * 32;
-	SDL_RenderFillRect(renderer, &screen_rect);
+	uint8_t activeColor = colors[0];
+	memset(pixels, 0, TEX_W * TEX_H * 4);
 	for(j = 0; j < 1; j++) {
-		if(j == 0) SDL_SetRenderDrawColor(renderer, colors[3], colors[3], colors[3], 255);
-		if(j == 1) SDL_SetRenderDrawColor(renderer, colors[1], colors[1], colors[1], 255);
+		if(j == 0) activeColor = colors[3];
+		if(j == 1) activeColor = colors[1];
 		for(i = 0; i < pixel_number; i++) {
 			if(canvas_data[j][i]) {
 				if(j == 1 && canvas_data[j-1][i])
-					SDL_SetRenderDrawColor(renderer, colors[2], colors[2], colors[2], 255);
-				int x = (i % screen_width) * ss;
-				int y = floor(i / screen_width) * ss;
-				SDL_Rect rect;
-				rect.x = x + SCREEN_OFFSETX * padding;
-				rect.y = y + SCREEN_OFFSETY * padding;
-				rect.w = ss;
-				rect.h = ss;
-				SDL_RenderFillRect(renderer, &rect);
+					activeColor = colors[2];
+				int x = (i % screen_width);
+				int y = floor(i / screen_width);
+				int index = y * TEX_W + x;
+				pixels[index * 4 + 0] = activeColor;
+				pixels[index * 4 + 1] = activeColor;
+				pixels[index * 4 + 2] = activeColor;
+				pixels[index * 4 + 3] = 255;
 			}
 		}
 	}
+	SDL_Rect tex_rect;
+	tex_rect.x = 0;
+	tex_rect.y = 0;
+	tex_rect.w = TEX_W / ((1-extendedScreen) + 1);
+	tex_rect.h = TEX_H / ((1-extendedScreen) + 1);
+	SDL_UpdateTexture(texture, NULL, pixels, TEX_W * 4);
+	SDL_RenderCopy(renderer, (void*)texture, &tex_rect, &screen_rect);
 }
 
 void render_toolbar(SDL_Renderer* renderer) {
@@ -85,23 +92,9 @@ void render_toolbar(SDL_Renderer* renderer) {
 }
 
 bool chooseGame() {
-	//nfdchar_t* outpath = NULL;
-	//nfdresult_t result = NFD_OpenDialog(NULL, romDirectory, &outpath);
 	char* outpath = NULL;
 	outpath = tinyfd_openFileDialog("Open a ROM", romDirectory, 0, NULL, NULL, 0);
 	
-	/*if(result == NFD_OKAY) {
-		char pathcpy[256];
-		strcpy(pathcpy, outpath);
-		strcpy(romDirectory, dirname(pathcpy));
-		loadProgram(outpath);
-		return true;
-	} else if(result = NFD_CANCEL) {
-		return false;
-	} else {
-		printf("Error: %s\n", NFD_GetError());
-		return false;
-	}*/
 	if(outpath != NULL) {
 		char pathcpy[256];
 		strcpy(pathcpy, outpath);
@@ -199,7 +192,7 @@ char* sanitizeCpf(char* input) {
 }
 
 int main(int argc, char* argv[]) {
-	int cpf = 100;
+	int cpf = 1;
 	bool nogui = false;
 	char openFile[256] = "null";
 	for(int i = 1; i < argc; i++) {
@@ -241,7 +234,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if(renderer == NULL) {
 		SDL_DestroyWindow(window);
 		printf("Error creating renderer: %s\n", SDL_GetError());
@@ -276,6 +269,9 @@ int main(int argc, char* argv[]) {
 	if(strcmp(openFile, "null") != 0) {
 		loadProgram(openFile);
 	}
+
+	SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, TEX_W, TEX_H);
+	unsigned char pixels[TEX_W * TEX_H * 4];
 	
 	SDL_Event e;
 	int quit = 0;
@@ -435,13 +431,13 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		
-		//emulateCycle(cpf);
+		emulateCycle(cpf);
 		
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
 		if(!nogui)
 			render_toolbar(renderer);
-		render_screen(renderer, !nogui);
+		render_screen(renderer, !nogui, texture, pixels);
 
 		if(!nogui) {
 			SDL_Color black = { 0, 0, 0 };
@@ -476,6 +472,7 @@ int main(int argc, char* argv[]) {
 		SDL_RenderPresent(renderer);
 	}
 	
+	SDL_DestroyTexture(texture);
 	TTF_CloseFont(font);
 	font = NULL;
 	TTF_Quit();
